@@ -112,7 +112,6 @@ func Start() <-chan *RssEntry {
 
 	go func() {
 		for _ = range ticker {
-			log.Println("tick!")
 			for _, url := range urls() {
 				go func(url string) {
 					feed, err := fetchRss(url)
