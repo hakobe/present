@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hakobe/hfav/collector"
-	slackIncoming "github.com/hakobe/hfav/slack/incomming"
-	slackOutgoing "github.com/hakobe/hfav/slack/outgoing"
+	"github.com/hakobe/present/collector"
+	slackIncoming "github.com/hakobe/present/slack/incomming"
+	slackOutgoing "github.com/hakobe/present/slack/outgoing"
 )
 
 func main() {

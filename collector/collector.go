@@ -103,7 +103,7 @@ func getLastUpdated(url string) time.Time {
 }
 
 func Start() <-chan *RssEntry {
-	ticker := time.Tick(30 * time.Second)
+	ticker := time.Tick(10 * time.Second)
 	out := make(chan *RssEntry)
 	lastUpdatedSem <- struct{}{}
 
