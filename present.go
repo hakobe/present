@@ -21,9 +21,9 @@ func main() {
 		}
 	}()
 
-	minWait := 3
-	maxWait := 20
-	wait := 5
+	minWait := 20
+	maxWait := 300
+	wait := 30
 	for {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
