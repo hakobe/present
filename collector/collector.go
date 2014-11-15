@@ -33,7 +33,7 @@ type RssFeed struct {
 	XMLName xml.Name `xml:"RDF"`
 	Url string
 	Title string `xml:"channel>title"`
-	RssEntries []RssEntry `xml:"item"`
+	RssEntries []*RssEntry `xml:"item"`
 }
 
 type RssEntry struct {
@@ -53,7 +53,6 @@ func (entry RssEntry) Date() time.Time {
 
 func parseRss(data []byte) (*RssFeed, error) {
 	var v RssFeed
-	fmt.Printf("%s", data)
 	err := xml.Unmarshal(data, &v)
 	if err != nil {
 		return nil, err
@@ -75,21 +74,55 @@ func fetchRss(url string) (*RssFeed, error) {
 	return feed, nil
 }
 
-func Loop() <-chan *RssEntry {
+var lastUpdated map[string]time.Time = make(map[string]time.Time)
+var lastUpdatedSem chan struct{} = make(chan struct{}, 1)
+
+func updateLastUpdated(url string) {
+	<- lastUpdatedSem
+	lastUpdated[url] = time.Now()
+	lastUpdatedSem <- struct{}{}
+}
+
+var started time.Time = time.Now()
+func getLastUpdated(url string) time.Time {
+	<- lastUpdatedSem
+	t, exists := lastUpdated[url]
+	lastUpdatedSem <- struct{}{}
+
+	if exists {
+		return t
+	} else {
+		return time.Time{}
+	}
+}
+
+func Start() <-chan *RssEntry {
 	ticker := time.Tick(5 * time.Second)
 	out := make(chan *RssEntry)
+	lastUpdatedSem <- struct{}{}
 
 	go func() {
 		for _ = range ticker {
+			fmt.Println("tick!")
 			for _, url := range urls() {
 				go func(url string) { feed, err := fetchRss(url)
+					checked := getLastUpdated(url)
+					
 					if err != nil {
 						fmt.Print(err)
 						return
 					}
-					for i, entry := range feed.RssEntries {
-						fmt.Printf("%v\n", i)
-						out <- &entry
+					anyUpdated := false
+					for _, entry := range feed.RssEntries {
+						if checked.Before(entry.Date()) {
+							fmt.Printf("Queued entry: %s\n", entry.Title)
+							anyUpdated = true
+							out <- entry
+						}
+					}
+
+					if anyUpdated {
+						updateLastUpdated(url)
 					}
 				}(url)
 			}

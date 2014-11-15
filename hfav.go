@@ -2,16 +2,25 @@ package main
 
 import (
 	"fmt"
-	"github.com/hakobe/hfav/admin"
 	"github.com/hakobe/hfav/collector"
 	slackIncoming "github.com/hakobe/hfav/slack/incomming"
+	slackOutgoing "github.com/hakobe/hfav/slack/outgoing"
 )
 
 func main() {
-	go admin.ListenAndServe()
-	entries := collector.Loop()
+	entries := collector.Start()
+	webhookArrived := slackOutgoing.Start()
+	buffer := make(chan *collector.RssEntry, 1000)
 
-	for entry := range entries {
+	go func() {
+		for entry := range entries {
+			buffer <- entry
+		}
+	}()
+
+	for entry := range buffer {
+		fmt.Printf("waiting ping\n")
+		<- webhookArrived
 		fmt.Printf("%v\n", entry)
 		err := slackIncoming.Post(fmt.Sprintf("%s - %s", entry.Title, entry.Url))
 		if err != nil {

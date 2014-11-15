@@ -7,9 +7,7 @@ import (
 	"os"
 )
 
-func webhookUrl() string {
-	return os.Getenv("PRESENT_SLACK_INCOMMING_URL")
-}
+var webhookUrl string = os.Getenv("PRESENT_SLACK_INCOMMING_URL")
 
 type payload struct {
 	Text string `json:"text"`
@@ -20,7 +18,7 @@ func Post(message string) error {
 	if err != nil {
 		return err
 	}
-	_, err = http.PostForm(webhookUrl(), url.Values{
+	_, err = http.PostForm(webhookUrl, url.Values{
 		"payload": []string{string(p)},
 	})
 	if err != nil {
