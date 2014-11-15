@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-var bind string = ":" + os.Getenv("PRESENT_SLACK_OUTGOING_PORT")
+var bind string = ":" + os.Getenv("PORT")
 
 func Start() chan struct{} {
 	out := make(chan struct{}, 1000)
