@@ -2,6 +2,7 @@ package outgoing
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 )
@@ -22,10 +23,10 @@ func Start() chan struct{} {
 	})
 
 	go func() {
-		fmt.Printf("Starting slack webhook on \"%s\"\n", bind)
+		log.Printf("Starting slack webhook on \"%s\"\n", bind)
 		err := http.ListenAndServe(bind, nil)
 		if err != nil {
-			fmt.Printf("ListenAndServe: %v", err)
+			log.Fatalf("ListenAndServe: %v", err)
 		}
 	}()
 

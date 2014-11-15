@@ -2,8 +2,8 @@ package collector
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -51,7 +51,7 @@ type RssEntry struct {
 func (entry RssEntry) Date() time.Time {
 	t, err := time.Parse("2006-01-02T15:04:05-07:00", entry.RawDate)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 	return t
 }
@@ -109,20 +109,20 @@ func Start() <-chan *RssEntry {
 
 	go func() {
 		for _ = range ticker {
-			fmt.Println("tick!")
+			log.Println("tick!")
 			for _, url := range urls() {
 				go func(url string) {
 					feed, err := fetchRss(url)
 					checked := getLastUpdated(url)
 
 					if err != nil {
-						fmt.Print(err)
+						log.Print(err)
 						return
 					}
 					anyUpdated := false
 					for _, entry := range feed.RssEntries {
 						if checked.Before(entry.Date()) {
-							fmt.Printf("Queued entry: %s\n", entry.Title)
+							log.Printf("Queued entry: %s\n", entry.Title)
 							anyUpdated = true
 							out <- entry
 						}

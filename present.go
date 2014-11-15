@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/hakobe/present/collector"
@@ -27,10 +28,10 @@ func main() {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
 			entry := <-buffer
-			fmt.Printf("%v\n", entry)
+			log.Printf("Posting entry: %s\n", entry.Title)
 			err := slackIncoming.Post(fmt.Sprintf("%s - %s", entry.Title, entry.Url))
 			if err != nil {
-				fmt.Printf("%v\n", err)
+				log.Printf("%v\n", err)
 				continue
 			}
 			if wait > minWait {
@@ -39,7 +40,7 @@ func main() {
 			if wait <= minWait {
 				wait = minWait
 			}
-			fmt.Printf("posted. please wait %ds\n", wait)
+			log.Printf("Entry posted. Please wait %ds.\n", wait)
 		case <-webhookArrived:
 			if wait < maxWait {
 				wait = int(float32(wait) * 1.2)
@@ -47,7 +48,7 @@ func main() {
 			if wait >= maxWait {
 				wait = maxWait
 			}
-			fmt.Printf("webhook arrived. please wait %ds\n", wait)
+			log.Printf("Webhook arrived. Please wait %ds.\n", wait)
 		}
 	}
 }
