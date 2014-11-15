@@ -10,7 +10,12 @@ import (
 
 func urls() []string {
 	return []string{
-		"http://b.hatena.ne.jp/hakobe932/rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=perl&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=ruby&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=javascript&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=golang&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=scala&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=java&mode=rss",
 	}
 }
 
@@ -30,17 +35,17 @@ func fetch(url string) ([]byte, error) {
 }
 
 type RssFeed struct {
-	XMLName xml.Name `xml:"RDF"`
-	Url string
-	Title string `xml:"channel>title"`
+	XMLName    xml.Name `xml:"RDF"`
+	Url        string
+	Title      string      `xml:"channel>title"`
 	RssEntries []*RssEntry `xml:"item"`
 }
 
 type RssEntry struct {
 	XMLName xml.Name `xml:"item"`
-	Title string `xml:"title"`
-	Url string `xml:"link"`
-	RawDate string `xml:"http://purl.org/dc/elements/1.1/ date"`
+	Title   string   `xml:"title"`
+	Url     string   `xml:"link"`
+	RawDate string   `xml:"http://purl.org/dc/elements/1.1/ date"`
 }
 
 func (entry RssEntry) Date() time.Time {
@@ -78,14 +83,15 @@ var lastUpdated map[string]time.Time = make(map[string]time.Time)
 var lastUpdatedSem chan struct{} = make(chan struct{}, 1)
 
 func updateLastUpdated(url string) {
-	<- lastUpdatedSem
+	<-lastUpdatedSem
 	lastUpdated[url] = time.Now()
 	lastUpdatedSem <- struct{}{}
 }
 
 var started time.Time = time.Now()
+
 func getLastUpdated(url string) time.Time {
-	<- lastUpdatedSem
+	<-lastUpdatedSem
 	t, exists := lastUpdated[url]
 	lastUpdatedSem <- struct{}{}
 
@@ -97,7 +103,7 @@ func getLastUpdated(url string) time.Time {
 }
 
 func Start() <-chan *RssEntry {
-	ticker := time.Tick(5 * time.Second)
+	ticker := time.Tick(30 * time.Second)
 	out := make(chan *RssEntry)
 	lastUpdatedSem <- struct{}{}
 
@@ -105,9 +111,10 @@ func Start() <-chan *RssEntry {
 		for _ = range ticker {
 			fmt.Println("tick!")
 			for _, url := range urls() {
-				go func(url string) { feed, err := fetchRss(url)
+				go func(url string) {
+					feed, err := fetchRss(url)
 					checked := getLastUpdated(url)
-					
+
 					if err != nil {
 						fmt.Print(err)
 						return
