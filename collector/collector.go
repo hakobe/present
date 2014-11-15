@@ -106,12 +106,12 @@ func getLastUpdated(url string) time.Time {
 	if exists {
 		return t
 	} else {
-		return time.Time{}
+		return started
 	}
 }
 
 func Start() <-chan *CollectedEntry {
-	ticker := time.Tick(30 * time.Second)
+	ticker := time.Tick(5 * time.Minute)
 	out := make(chan *CollectedEntry)
 	lastUpdatedSem <- struct{}{}
 
