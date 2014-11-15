@@ -10,6 +10,9 @@ import (
 
 func urls() []string {
 	return []string{
+		"http://b.hatena.ne.jp/hotentry/it.rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=aws&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=docker&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=perl&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=ruby&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=javascript&mode=rss",
@@ -103,7 +106,7 @@ func getLastUpdated(url string) time.Time {
 }
 
 func Start() <-chan *RssEntry {
-	ticker := time.Tick(10 * time.Second)
+	ticker := time.Tick(30 * time.Second)
 	out := make(chan *RssEntry)
 	lastUpdatedSem <- struct{}{}
 
