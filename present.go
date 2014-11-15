@@ -10,14 +10,25 @@ import (
 	slackOutgoing "github.com/hakobe/present/slack/outgoing"
 )
 
+func getRecentlyCollectedEntry( collectedEntries chan *collector.CollectedEntry ) *collector.RssEntry {
+	var entry *collector.RssEntry
+	for collectedEntry := range collectedEntries {
+		if collectedEntry.CollectedAt.After(time.Now().Add( -3 * time.Hour )) {
+			entry = collectedEntry.Entry
+			break
+		}
+	}
+	return entry
+}
+
 func main() {
-	entries := collector.Start()
+	collectedEntries := collector.Start()
 	webhookArrived := slackOutgoing.Start()
 
-	buffer := make(chan *collector.RssEntry, 1000)
+	buffer := make(chan *collector.CollectedEntry, 1000)
 	go func() {
-		for entry := range entries {
-			buffer <- entry
+		for collectedEntry := range collectedEntries {
+			buffer <- collectedEntry
 		}
 	}()
 
@@ -27,7 +38,9 @@ func main() {
 	for {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
-			entry := <-buffer
+			log.Println("Getting next entry...")
+			entry := getRecentlyCollectedEntry(buffer)
+
 			log.Printf("Posting entry: %s\n", entry.Title)
 			err := slackIncoming.Post(fmt.Sprintf("%s - %s", entry.Title, entry.Url))
 			if err != nil {

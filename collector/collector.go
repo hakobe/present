@@ -59,6 +59,11 @@ func (entry RssEntry) Date() time.Time {
 	return t
 }
 
+type CollectedEntry struct {
+	Entry *RssEntry
+	CollectedAt time.Time
+}
+
 func parseRss(data []byte) (*RssFeed, error) {
 	var v RssFeed
 	err := xml.Unmarshal(data, &v)
@@ -105,13 +110,14 @@ func getLastUpdated(url string) time.Time {
 	}
 }
 
-func Start() <-chan *RssEntry {
+func Start() <-chan *CollectedEntry {
 	ticker := time.Tick(30 * time.Second)
-	out := make(chan *RssEntry)
+	out := make(chan *CollectedEntry)
 	lastUpdatedSem <- struct{}{}
 
 	go func() {
 		for _ = range ticker {
+			log.Println("Collecting new feeds...")
 			for _, url := range urls() {
 				go func(url string) {
 					feed, err := fetchRss(url)
@@ -126,7 +132,7 @@ func Start() <-chan *RssEntry {
 						if checked.Before(entry.Date()) {
 							log.Printf("Queued entry: %s\n", entry.Title)
 							anyUpdated = true
-							out <- entry
+							out <- &CollectedEntry{entry, time.Now()}
 						}
 					}
 
