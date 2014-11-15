@@ -87,33 +87,31 @@ func fetchRss(url string) (*RssFeed, error) {
 	return feed, nil
 }
 
-var lastUpdated map[string]time.Time = make(map[string]time.Time)
-var lastUpdatedSem chan struct{} = make(chan struct{}, 1)
+var seenUrls map[string]bool = make(map[string]bool)
+var seenUrlsSem chan struct{} = make(chan struct{}, 1)
 
-func updateLastUpdated(url string) {
-	<-lastUpdatedSem
-	lastUpdated[url] = time.Now()
-	lastUpdatedSem <- struct{}{}
+func setSeen(url string) {
+	<-seenUrlsSem
+	seenUrls[url] = true
+	seenUrlsSem <- struct{}{}
 }
 
-var started time.Time = time.Now()
+func hasSeen(url string) bool {
+	<-seenUrlsSem
+	t, exists := seenUrls[url]
+	seenUrlsSem <- struct{}{}
 
-func getLastUpdated(url string) time.Time {
-	<-lastUpdatedSem
-	t, exists := lastUpdated[url]
-	lastUpdatedSem <- struct{}{}
-
-	if exists {
-		return t
+	if exists && t {
+		return true
 	} else {
-		return started
+		return false
 	}
 }
 
 func Start() <-chan *CollectedEntry {
 	ticker := time.Tick(5 * time.Minute)
 	out := make(chan *CollectedEntry)
-	lastUpdatedSem <- struct{}{}
+	seenUrlsSem <- struct{}{}
 
 	go func() {
 		for _ = range ticker {
@@ -121,23 +119,17 @@ func Start() <-chan *CollectedEntry {
 			for _, url := range urls() {
 				go func(url string) {
 					feed, err := fetchRss(url)
-					checked := getLastUpdated(url)
 
 					if err != nil {
 						log.Print(err)
 						return
 					}
-					anyUpdated := false
 					for _, entry := range feed.RssEntries {
-						if checked.Before(entry.Date()) {
+						if !hasSeen(entry.Url) {
 							log.Printf("Queued entry: %s\n", entry.Title)
-							anyUpdated = true
+							setSeen(entry.Url)
 							out <- &CollectedEntry{entry, time.Now()}
 						}
-					}
-
-					if anyUpdated {
-						updateLastUpdated(url)
 					}
 				}(url)
 			}
