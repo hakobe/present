@@ -14,7 +14,7 @@ func Start() chan string {
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
 			userId := r.FormValue("user_id")
-			if userId == "USLACKBOT" {
+			if userId != "USLACKBOT" {
 				out <- "ping"
 			}
 		}
