@@ -75,7 +75,7 @@ func fetchRss(url string) (*RssFeed, error) {
 	return feed, nil
 }
 
-func StartLoop() <-chan *RssEntry {
+func Loop() <-chan *RssEntry {
 	ticker := time.Tick(5 * time.Second)
 	out := make(chan *RssEntry)
 

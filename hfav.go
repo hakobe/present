@@ -9,7 +9,7 @@ import (
 
 func main() {
 	go admin.ListenAndServe()
-	entries := collector.StartLoop()
+	entries := collector.Loop()
 
 	for entry := range entries {
 		fmt.Printf("%v\n", entry)
