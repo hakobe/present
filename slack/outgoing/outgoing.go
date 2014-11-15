@@ -12,7 +12,13 @@ func Start() chan string {
 	out := make(chan string, 1000)
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		out <- "ping"
+		if r.Method == "POST" {
+			userId := r.FormValue("user_id")
+			fmt.Printf("%v\n", userId)
+			if userId == "USLACKBOT" {
+				out <- "ping"
+			}
+		}
 		fmt.Fprintf(rw, "ok")
 	})
 
