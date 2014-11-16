@@ -10,11 +10,14 @@ import (
 
 func urls() []string {
 	return []string{
-		"http://b.hatena.ne.jp/hotentry/it.rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=aws&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=docker&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=linux&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=http&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=perl&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=ruby&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=vim&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=emacs&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=javascript&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=golang&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=scala&mode=rss",
