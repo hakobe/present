@@ -62,11 +62,6 @@ func (entry RssEntry) Date() time.Time {
 	return t
 }
 
-type CollectedEntry struct {
-	Entry *RssEntry
-	CollectedAt time.Time
-}
-
 func parseRss(data []byte) (*RssFeed, error) {
 	var v RssFeed
 	err := xml.Unmarshal(data, &v)
@@ -111,14 +106,13 @@ func hasSeen(url string) bool {
 	}
 }
 
-func Start() <-chan *CollectedEntry {
+func Start() <-chan *RssEntry {
 	ticker := time.Tick(5 * time.Minute)
-	out := make(chan *CollectedEntry)
+	out := make(chan *RssEntry)
 	seenUrlsSem <- struct{}{}
 
 	go func() {
 		for _ = range ticker {
-			log.Println("Collecting new feeds...")
 			for _, url := range urls() {
 				go func(url string) {
 					feed, err := fetchRss(url)
@@ -131,7 +125,7 @@ func Start() <-chan *CollectedEntry {
 						if !hasSeen(entry.Url) {
 							log.Printf("Queued entry: %s\n", entry.Title)
 							setSeen(entry.Url)
-							out <- &CollectedEntry{entry, time.Now()}
+							out <- entry
 						}
 					}
 				}(url)
