@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/hakobe/present/config"
 )
 
 var webhookUrl string = os.Getenv("PRESENT_SLACK_INCOMMING_URL")
@@ -18,7 +20,7 @@ func Post(message string) error {
 	if err != nil {
 		return err
 	}
-	_, err = http.PostForm(webhookUrl, url.Values{
+	_, err = http.PostForm(config.SlackIncomingWebhookUrl, url.Values{
 		"payload": []string{string(p)},
 	})
 	if err != nil {

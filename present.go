@@ -1,16 +1,27 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/hakobe/present/collector"
+	"github.com/hakobe/present/config"
+	"github.com/hakobe/present/entries"
 	slackIncoming "github.com/hakobe/present/slack/incomming"
 	slackOutgoing "github.com/hakobe/present/slack/outgoing"
 )
 
 func main() {
+	db, err := sql.Open("mysql", config.DbDsn)
+	err = entries.Prepare(db)
+	if err != nil {
+		log.Fatalf("db error: %v\n", err)
+	}
+
 	entries := collector.Start()
 	webhookArrived := slackOutgoing.Start()
 
