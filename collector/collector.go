@@ -93,31 +93,9 @@ func fetchRss(url string) (*RssFeed, error) {
 	return feed, nil
 }
 
-var seenUrls map[string]bool = make(map[string]bool)
-var seenUrlsSem chan struct{} = make(chan struct{}, 1)
-
-func setSeen(url string) {
-	<-seenUrlsSem
-	seenUrls[url] = true
-	seenUrlsSem <- struct{}{}
-}
-
-func hasSeen(url string) bool {
-	<-seenUrlsSem
-	t, exists := seenUrls[url]
-	seenUrlsSem <- struct{}{}
-
-	if exists && t {
-		return true
-	} else {
-		return false
-	}
-}
-
 func Start() <-chan *RssEntry {
 	ticker := time.Tick(30 * time.Minute)
 	out := make(chan *RssEntry)
-	seenUrlsSem <- struct{}{}
 
 	go func() {
 		for _ = range ticker {
@@ -130,11 +108,8 @@ func Start() <-chan *RssEntry {
 						return
 					}
 					for _, entry := range feed.RssEntries {
-						if !hasSeen(entry.Url()) {
-							log.Printf("Queued entry: %s\n", entry.Title())
-							setSeen(entry.Url())
-							out <- entry
-						}
+						log.Printf("Queued entry: %s\n", entry.Title())
+						out <- entry
 					}
 				}(url)
 			}
