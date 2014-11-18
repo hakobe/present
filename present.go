@@ -12,7 +12,7 @@ import (
 	"github.com/hakobe/present/config"
 	"github.com/hakobe/present/entries"
 	slackIncoming "github.com/hakobe/present/slack/incomming"
-	slackOutgoing "github.com/hakobe/present/slack/outgoing"
+	"github.com/hakobe/present/web"
 )
 
 func postNextEntry(db *sql.DB) {
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	collectedEntries := collector.Start()
-	webhookArrived := slackOutgoing.Start()
+	webOp := web.Start()
 
 	go func() {
 		for entry := range collectedEntries {
@@ -56,8 +56,12 @@ func main() {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
 			postNextEntry(db)
-		case <-webhookArrived:
-			log.Printf("Webhook arrived. \n")
+		case op := <-webOp:
+			if op == "slackoutgoing" {
+				log.Printf("Webhook arrived. Go to next sleep.\n")
+			} else if op == "postnext" {
+				postNextEntry(db)
+			}
 		}
 	}
 }
