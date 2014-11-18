@@ -15,6 +15,21 @@ import (
 	slackOutgoing "github.com/hakobe/present/slack/outgoing"
 )
 
+func postNextEntry(db *sql.DB) {
+	entry, err := entries.Next(db)
+	if err != nil {
+		log.Printf("No entries can be retrieved: %v\n", err)
+		return
+	}
+	log.Printf("Posting entry: %s\n", entry.Title())
+	err = slackIncoming.Post(fmt.Sprintf("%s - %s", entry.Title(), entry.Url()))
+	if err != nil {
+		log.Printf("%v\n", err)
+		return
+	}
+	log.Printf("Entry posted.\n")
+}
+
 func main() {
 	db, err := sql.Open("mysql", config.DbDsn)
 	err = entries.Prepare(db)
@@ -40,20 +55,9 @@ func main() {
 	for {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
-			entry, err := entries.Next(db)
-			if err != nil {
-				log.Printf("No entries can be retrieved: %v\n", err)
-				continue
-			}
-			log.Printf("Posting entry: %s\n", entry.Title())
-			err = slackIncoming.Post(fmt.Sprintf("%s - %s", entry.Title(), entry.Url()))
-			if err != nil {
-				log.Printf("%v\n", err)
-				continue
-			}
-			log.Printf("Entry posted. Please wait %ds for next.\n", wait)
+			postNextEntry(db)
 		case <-webhookArrived:
-			log.Printf("Webhook arrived. Please wait %ds for next.\n", wait)
+			log.Printf("Webhook arrived. \n")
 		}
 	}
 }
