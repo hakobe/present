@@ -22,13 +22,16 @@ func main() {
 		log.Fatalf("db error: %v\n", err)
 	}
 
-	entries := collector.Start()
+	collectedEntries := collector.Start()
 	webhookArrived := slackOutgoing.Start()
 
-	buffer := make(chan *collector.RssEntry, 1000)
 	go func() {
-		for entry := range entries {
-			buffer <- entry
+		for entry := range collectedEntries {
+			err = entries.Add(db, entry)
+			if err != nil {
+				log.Printf("SQL error: %v\n", err)
+				continue
+			}
 		}
 	}()
 
@@ -38,9 +41,13 @@ func main() {
 	for {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
-			entry := <-buffer
-			log.Printf("Posting entry: %s\n", entry.Title)
-			err := slackIncoming.Post(fmt.Sprintf("%s - %s", entry.Title, entry.Url))
+			entry, err := entries.Next(db)
+			if err != nil {
+				log.Printf("No entries can be retrieved: %v\n", err)
+				continue
+			}
+			log.Printf("Posting entry: %s\n", entry.Title())
+			err = slackIncoming.Post(fmt.Sprintf("%s - %s", entry.Title(), entry.Url()))
 			if err != nil {
 				log.Printf("%v\n", err)
 				continue

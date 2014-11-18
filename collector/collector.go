@@ -48,13 +48,21 @@ type RssFeed struct {
 }
 
 type RssEntry struct {
-	XMLName xml.Name `xml:"item"`
-	Title   string   `xml:"title"`
-	Url     string   `xml:"link"`
-	RawDate string   `xml:"http://purl.org/dc/elements/1.1/ date"`
+	XMLName  xml.Name `xml:"item"`
+	RawTitle string   `xml:"title"`
+	RawUrl   string   `xml:"link"`
+	RawDate  string   `xml:"http://purl.org/dc/elements/1.1/ date"`
 }
 
-func (entry RssEntry) Date() time.Time {
+func (entry *RssEntry) Title() string {
+	return entry.RawTitle
+}
+
+func (entry *RssEntry) Url() string {
+	return entry.RawUrl
+}
+
+func (entry *RssEntry) Date() time.Time {
 	t, err := time.Parse("2006-01-02T15:04:05-07:00", entry.RawDate)
 	if err != nil {
 		log.Fatal(err)
@@ -122,9 +130,9 @@ func Start() <-chan *RssEntry {
 						return
 					}
 					for _, entry := range feed.RssEntries {
-						if !hasSeen(entry.Url) {
-							log.Printf("Queued entry: %s\n", entry.Title)
-							setSeen(entry.Url)
+						if !hasSeen(entry.Url()) {
+							log.Printf("Queued entry: %s\n", entry.Title())
+							setSeen(entry.Url())
 							out <- entry
 						}
 					}
