@@ -36,9 +36,7 @@ func main() {
 	}()
 	entries.StartCleaner(db)
 
-	minWait := 3 * 60
-	maxWait := 20 * 60
-	wait := 5 * 60
+	wait := 20 * 60
 	for {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
@@ -53,21 +51,9 @@ func main() {
 				log.Printf("%v\n", err)
 				continue
 			}
-			if wait > minWait {
-				wait = int(float32(wait) / 1.2)
-			}
-			if wait <= minWait {
-				wait = minWait
-			}
-			log.Printf("Entry posted. Please wait %ds.\n", wait)
+			log.Printf("Entry posted. Please wait %ds for next.\n", wait)
 		case <-webhookArrived:
-			if wait < maxWait {
-				wait = int(float32(wait) * 1.2)
-			}
-			if wait >= maxWait {
-				wait = maxWait
-			}
-			log.Printf("Webhook arrived. Please wait %ds.\n", wait)
+			log.Printf("Webhook arrived. Please wait %ds for next.\n", wait)
 		}
 	}
 }

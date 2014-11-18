@@ -115,7 +115,7 @@ func hasSeen(url string) bool {
 }
 
 func Start() <-chan *RssEntry {
-	ticker := time.Tick(5 * time.Minute)
+	ticker := time.Tick(30 * time.Minute)
 	out := make(chan *RssEntry)
 	seenUrlsSem <- struct{}{}
 
