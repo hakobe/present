@@ -2,6 +2,7 @@ package entries
 
 import (
 	"database/sql"
+	"log"
 	"time"
 )
 
@@ -104,4 +105,28 @@ func Next(db *sql.DB) (*DbEntry, error) {
 	}
 	tx.Commit()
 	return entry, nil
+}
+
+func deleteOld(db *sql.DB) error {
+	sql := `
+		DELETE FROM entries
+		WHERE created < DATE_SUB(NOW(), INTERVAL 1 DAY)
+	`
+	_, err := db.Exec(sql)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func StartCleaner(db *sql.DB) {
+	go func() {
+		ticker := time.Tick( 1 * time.Hour)
+		for _ = range ticker {
+			err := deleteOld(db)
+			if err != nil {
+				log.Println("Failed to delete old entries: %v", err)
+			}
+		}
+	}()
 }

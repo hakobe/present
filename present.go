@@ -34,6 +34,7 @@ func main() {
 			}
 		}
 	}()
+	entries.StartCleaner(db)
 
 	minWait := 3 * 60
 	maxWait := 20 * 60
