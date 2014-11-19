@@ -40,7 +40,6 @@ func Prepare(db *sql.DB) error {
 			has_posted BOOL NOT NULL,
 			created    TIMESTAMP NOT NULL,
 			PRIMARY KEY(id),
-			UNIQUE KEY(id),
 			KEY(has_posted, created, date)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8
 	`
@@ -53,16 +52,43 @@ func Prepare(db *sql.DB) error {
 }
 
 func Add(db *sql.DB, entry Entry) error {
-	sql := `
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	// XXX maybe this cause table lock
+	lockSql := `
+		SELECT id FROM entries
+		WHERE
+		  url = ?
+		FOR UPDATE
+	`
+	var id int
+	err = tx.QueryRow(lockSql, entry.Url()).Scan(&id)
+	switch {
+	case err == sql.ErrNoRows:
+		// nop, ok
+	case err != nil:
+		tx.Rollback()
+		return err
+	default:
+		tx.Rollback()
+		log.Println("Entry has already fetched.")
+		return nil
+	}
+
+	insertSql := `
 		INSERT INTO entries
 		(url, title, date, has_posted, created)
 		VALUES
 		( ?, ?, ?, ?, ? )
 	`
-	_, err := db.Exec(sql, entry.Url(), entry.Title(), entry.Date(), false, time.Now())
+	_, err = tx.Exec(insertSql, entry.Url(), entry.Title(), entry.Date(), false, time.Now())
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
+	tx.Commit()
 	return nil
 }
 
