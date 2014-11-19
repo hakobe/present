@@ -101,7 +101,7 @@ func Next(db *sql.DB) (*DbEntry, error) {
 		SELECT id, url, title, date FROM entries
 		WHERE
 		  NOT has_posted AND
-		  created > DATE_SUB(NOW(), INTERVAL 3 HOUR)
+		  created > DATE_SUB(NOW(), INTERVAL 1 DAY)
 		ORDER BY date DESC
 		LIMIT 1
 		FOR UPDATE
