@@ -136,7 +136,7 @@ func Next(db *sql.DB) (*DbEntry, error) {
 func deleteOld(db *sql.DB) error {
 	sql := `
 		DELETE FROM entries
-		WHERE created < DATE_SUB(NOW(), INTERVAL 1 DAY)
+		WHERE created < DATE_SUB(NOW(), INTERVAL 2 DAY)
 	`
 	_, err := db.Exec(sql)
 	if err != nil {
