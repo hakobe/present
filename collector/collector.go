@@ -22,6 +22,9 @@ func urls() []string {
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=golang&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=scala&mode=rss",
 		"http://b.hatena.ne.jp/search/tag?safe=on&q=java&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=programming&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=angular&mode=rss",
+		"http://b.hatena.ne.jp/search/tag?safe=on&q=react&mode=rss",
 	}
 }
 
