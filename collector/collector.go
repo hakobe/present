@@ -5,27 +5,23 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
+
+	"github.com/hakobe/present/config"
 )
 
 func urls() []string {
-	return []string{
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=aws&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=docker&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=linux&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=http&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=perl&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=ruby&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=vim&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=emacs&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=javascript&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=golang&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=scala&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=java&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=programming&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=angular&mode=rss",
-		"http://b.hatena.ne.jp/search/tag?safe=on&q=react&mode=rss",
+	urls := []string{}
+
+	for _, tag := range config.Tags {
+		queries := url.Values{}
+		queries.Add("safe", "on")
+		queries.Add("mode", "rss")
+		queries.Add("q", tag)
+		urls = append(urls, "http://b.hatena.ne.jp/search/tag?"+queries.Encode())
 	}
+	return urls
 }
 
 func fetch(url string) ([]byte, error) {
