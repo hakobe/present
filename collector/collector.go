@@ -96,6 +96,8 @@ func Start() <-chan *RssEntry {
 	ticker := time.Tick(30 * time.Minute)
 	out := make(chan *RssEntry)
 
+	log.Printf("Starting collector for tags: %s\n", config.Tags)
+
 	go func() {
 		for _ = range ticker {
 			for _, url := range urls() {
