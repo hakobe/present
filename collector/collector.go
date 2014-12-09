@@ -93,27 +93,32 @@ func fetchRss(url string) (*RssFeed, error) {
 }
 
 func Start() <-chan *RssEntry {
-	ticker := time.Tick(30 * time.Minute)
+	ticker := time.Tick(10 * time.Minute)
 	out := make(chan *RssEntry)
 
 	log.Printf("Starting collector for tags: %s\n", config.Tags)
 
-	go func() {
-		for _ = range ticker {
-			for _, url := range urls() {
-				go func(url string) {
-					feed, err := fetchRss(url)
+	collect := func(out chan *RssEntry) {
+		for _, url := range urls() {
+			go func(url string) {
+				feed, err := fetchRss(url)
 
-					if err != nil {
-						log.Print(err)
-						return
-					}
-					for _, entry := range feed.RssEntries {
-						log.Printf("Queued entry: %s\n", entry.Title())
-						out <- entry
-					}
-				}(url)
-			}
+				if err != nil {
+					log.Print(err)
+					return
+				}
+				for _, entry := range feed.RssEntries {
+					log.Printf("Queued entry: %s\n", entry.Title())
+					out <- entry
+				}
+			}(url)
+		}
+	}
+
+	go func() {
+		collect(out)
+		for _ = range ticker {
+			collect(out)
 		}
 	}()
 
