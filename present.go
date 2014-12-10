@@ -15,6 +15,15 @@ import (
 	"github.com/hakobe/present/web"
 )
 
+func trim(s string, l int) string {
+	r := []rune(s)
+	res := string(r)
+	if (len(r) > l && l >= 3) {
+		res = string(r[0: (l - 3)]) + "..."
+	}
+	return res
+}
+
 func postNextEntry(db *sql.DB) {
 	entry, err := entries.Next(db)
 	if err != nil {
@@ -22,7 +31,10 @@ func postNextEntry(db *sql.DB) {
 		return
 	}
 	log.Printf("Posting entry: %s\n", entry.Title())
-	err = slackIncoming.Post(fmt.Sprintf("%s - %s", entry.Title(), entry.Url()))
+	err = slackIncoming.Post(
+		fmt.Sprintf("<%s|%s>", entry.Url(), entry.Title()),
+		trim(entry.Description(), 300),
+	)
 	if err != nil {
 		log.Printf("%v\n", err)
 		return

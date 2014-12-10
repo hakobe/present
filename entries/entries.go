@@ -9,12 +9,14 @@ import (
 type Entry interface {
 	Title() string
 	Url() string
+	Description() string
 	Date() time.Time
 }
 
 type DbEntry struct {
 	title string
 	url string
+	description string
 	date time.Time
 }
 
@@ -26,6 +28,10 @@ func (entry *DbEntry) Url() string {
 	return entry.url
 }
 
+func (entry *DbEntry) Description() string {
+	return entry.description
+}
+
 func (entry *DbEntry) Date() time.Time {
 	return entry.date
 }
@@ -33,15 +39,16 @@ func (entry *DbEntry) Date() time.Time {
 func Prepare(db *sql.DB) error {
 	sql := `
 		CREATE TABLE IF NOT EXISTS entries (
-			id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-			url        VARCHAR(1024) NOT NULL,
-			title      VARCHAR(255) NOT NULL,
-			date       TIMESTAMP NOT NULL,
-			has_posted BOOL NOT NULL,
-			created    TIMESTAMP NOT NULL,
+			id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+			url         VARCHAR(1024) NOT NULL,
+			title       VARCHAR(255) NOT NULL,
+			description TEXT NOT NULL,
+			date        TIMESTAMP NOT NULL,
+			has_posted  BOOL NOT NULL,
+			created     TIMESTAMP NOT NULL,
 			PRIMARY KEY(id),
 			KEY(has_posted, created, date)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 	`
 	_, err := db.Exec(sql)
 	if err != nil {
@@ -79,11 +86,11 @@ func Add(db *sql.DB, entry Entry) error {
 
 	insertSql := `
 		INSERT INTO entries
-		(url, title, date, has_posted, created)
+		(url, title, description, date, has_posted, created)
 		VALUES
-		( ?, ?, ?, ?, ? )
+		( ?, ?, ?, ?, ?, ? )
 	`
-	_, err = tx.Exec(insertSql, entry.Url(), entry.Title(), entry.Date(), false, time.Now())
+	_, err = tx.Exec(insertSql, entry.Url(), entry.Title(), entry.Description(), entry.Date(), false, time.Now())
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -98,7 +105,7 @@ func Next(db *sql.DB) (*DbEntry, error) {
 		return nil, err
 	}
 	fetchSql := `
-		SELECT id, url, title, date FROM entries
+		SELECT id, url, title, description, date FROM entries
 		WHERE
 		  NOT has_posted AND
 		  created > DATE_SUB(NOW(), INTERVAL 1 DAY)
@@ -112,6 +119,7 @@ func Next(db *sql.DB) (*DbEntry, error) {
 		&id,
 		&(entry.url),
 		&(entry.title),
+		&(entry.description),
 		&(entry.date),
 	)
 	if err != nil {

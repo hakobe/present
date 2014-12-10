@@ -48,10 +48,11 @@ type RssFeed struct {
 }
 
 type RssEntry struct {
-	XMLName  xml.Name `xml:"item"`
-	RawTitle string   `xml:"title"`
-	RawUrl   string   `xml:"link"`
-	RawDate  string   `xml:"http://purl.org/dc/elements/1.1/ date"`
+	XMLName        xml.Name `xml:"item"`
+	RawTitle       string   `xml:"title"`
+	RawUrl         string   `xml:"link"`
+	RawDescription string   `xml:"description"`
+	RawDate        string   `xml:"http://purl.org/dc/elements/1.1/ date"`
 }
 
 func (entry *RssEntry) Title() string {
@@ -60,6 +61,10 @@ func (entry *RssEntry) Title() string {
 
 func (entry *RssEntry) Url() string {
 	return entry.RawUrl
+}
+
+func (entry *RssEntry) Description() string {
+	return entry.RawDescription
 }
 
 func (entry *RssEntry) Date() time.Time {
