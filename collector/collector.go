@@ -18,6 +18,7 @@ func urls() []string {
 		queries := url.Values{}
 		queries.Add("safe", "on")
 		queries.Add("mode", "rss")
+		queries.Add("users", "5")
 		queries.Add("q", tag)
 		urls = append(urls, "http://b.hatena.ne.jp/search/tag?"+queries.Encode())
 	}
