@@ -63,7 +63,7 @@ func main() {
 	}()
 	entries.StartCleaner(db)
 
-	wait := 20 * 60
+	wait := 15 * 60;
 	for {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
