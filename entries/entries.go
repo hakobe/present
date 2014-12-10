@@ -48,7 +48,7 @@ func Prepare(db *sql.DB) error {
 			created     TIMESTAMP NOT NULL,
 			PRIMARY KEY(id),
 			KEY(has_posted, created, date)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+		) ENGINE=InnoDB DEFAULT CHARSET=binary
 	`
 	_, err := db.Exec(sql)
 	if err != nil {
