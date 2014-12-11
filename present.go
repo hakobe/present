@@ -18,8 +18,8 @@ import (
 func trim(s string, l int) string {
 	r := []rune(s)
 	res := string(r)
-	if (len(r) > l && l >= 3) {
-		res = string(r[0: (l - 3)]) + "..."
+	if len(r) > l && l >= 3 {
+		res = string(r[0:(l-3)]) + "..."
 	}
 	return res
 }
@@ -63,16 +63,21 @@ func main() {
 	}()
 	entries.StartCleaner(db)
 
-	wait := 15 * 60;
+	wait := 15 * 60
 	for {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
 			postNextEntry(db)
 		case op := <-webOp:
-			if op == "slackoutgoing" {
-				log.Printf("Webhook arrived. Go to next sleep.\n")
-			} else if op == "postnext" {
+			log.Printf("op: %s\n", op)
+			if op == "slack-humanspeaking" {
+				log.Printf("Humans are speaking. Go to next sleep.\n")
+			} else if op == "postnext" || op == "slack-plz" {
 				postNextEntry(db)
+			} else if op == "slack-fever" {
+				for i := 0; i < 10; i++ {
+					postNextEntry(db)
+				}
 			}
 		}
 	}
