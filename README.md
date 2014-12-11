@@ -18,7 +18,7 @@
 
 ```sh
 $ go get github.com/hakobe/present
-$ PORT="8080"
+$ PORT="8080" \
   PRESENT_SLACK_INCOMMING_URL="https://hooks.slack.com/services/ABCD1234/EFGH5679/abcdefghijk123456" \
   PRESENT_DB_DSN="id:pass@tcp(mysqldhost:3306)/dbname?parseTime=true&charset=utf8" \
   PRESENT_TAGS=perl,ruby,javascript \ # チェック対象のタグ(カンマ区切り)
