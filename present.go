@@ -63,13 +63,12 @@ func main() {
 	}()
 	entries.StartCleaner(db)
 
-	wait := 15 * 60
+	wait := config.Wait
 	for {
 		select {
 		case <-time.After(time.Duration(wait) * time.Second):
 			postNextEntry(db)
 		case op := <-webOp:
-			log.Printf("op: %s\n", op)
 			if op == "slack-humanspeaking" {
 				log.Printf("Humans are speaking. Go to next sleep.\n")
 			} else if op == "postnext" || op == "slack-plz" {
