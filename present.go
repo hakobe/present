@@ -33,7 +33,7 @@ func postNextEntry(db *sql.DB) {
 	log.Printf("Posting entry: %s\n", entry.Title())
 	err = slackIncoming.Post(
 		fmt.Sprintf("<%s|%s>", entry.Url(), entry.Title()),
-		trim(entry.Description(), 200),
+		trim(entry.Description(), 150),
 	)
 	if err != nil {
 		log.Printf("%v\n", err)
