@@ -20,6 +20,6 @@ func init() {
 
 	name := os.Getenv("PRESENT_NAME")
 	if name != "" {
-		Name = "present"
+		Name = name
 	}
 }
