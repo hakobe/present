@@ -63,11 +63,21 @@ func main() {
 	}()
 	entries.StartCleaner(db)
 
+	noopCount := 0
 	wait := config.Wait
 	for {
+		var timer <-chan time.Time
+		if config.NoopLimit == 0 || noopCount < config.NoopLimit {
+			timer = time.After(time.Duration(wait) * time.Second)
+		} else {
+			timer = make(chan time.Time) // block. leak?
+			log.Printf("NoopLimit(%d) reached, going to long sleep...\n", config.NoopLimit)
+		}
 		select {
-		case <-time.After(time.Duration(wait) * time.Second):
+		case <-timer:
 			postNextEntry(db)
+
+			noopCount += 1
 		case op := <-webOp:
 			if op == "slack-humanspeaking" {
 				log.Printf("Humans are speaking. Go to next sleep.\n")
@@ -78,6 +88,8 @@ func main() {
 					postNextEntry(db)
 				}
 			}
+
+			noopCount = 0
 		}
 	}
 }
