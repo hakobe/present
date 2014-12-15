@@ -23,6 +23,7 @@ $ PORT="8080" \
   PRESENT_DB_DSN="id:pass@tcp(mysqldhost:3306)/dbname?parseTime=true&charset=utf8" \
   PRESENT_TAGS=perl,ruby,javascript \ # チェック対象のタグ(カンマ区切り)
   PRESENT_WAIT=900 \                  # URLを発言する頻度(秒)
+  PRESENT_NOOP_LIMIT=3 \              # この回数だけ連続して発言したら一時停止する
   $GOPATH/bin/present
 ```
 
