@@ -7,14 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-
-	"github.com/hakobe/present/config"
 )
 
-func urls() []string {
+func urls(tags []string) []string {
 	urls := []string{}
 
-	for _, tag := range config.Tags {
+	for _, tag := range tags {
 		queries := url.Values{}
 		queries.Add("safe", "on")
 		queries.Add("mode", "rss")
@@ -98,14 +96,13 @@ func fetchRss(url string) (*RssFeed, error) {
 	return feed, nil
 }
 
-func Start() <-chan *RssEntry {
+func Start() (<-chan *RssEntry, chan<- []string) {
 	ticker := time.Tick(10 * time.Minute)
 	out := make(chan *RssEntry)
+	newTags := make(chan []string)
 
-	log.Printf("Starting collector for tags: %s\n", config.Tags)
-
-	collect := func(out chan *RssEntry) {
-		for _, url := range urls() {
+	collect := func(tags []string, out chan *RssEntry) {
+		for _, url := range urls(tags) {
 			go func(url string) {
 				feed, err := fetchRss(url)
 
@@ -122,11 +119,18 @@ func Start() <-chan *RssEntry {
 	}
 
 	go func() {
-		collect(out)
-		for _ = range ticker {
-			collect(out)
+		tags := make([]string, 0)
+		for {
+			select {
+			case <-ticker:
+				collect(tags, out)
+			case ts := <- newTags:
+				tags = ts
+				log.Printf("New tags: %s\n", tags)
+				collect(tags, out)
+			}
 		}
 	}()
 
-	return out
+	return out, newTags
 }
