@@ -156,7 +156,7 @@ func Upcommings(db *sql.DB) ([]*DbEntry, error) {
 		  NOT has_posted AND
 		  created > DATE_SUB(NOW(), INTERVAL 3 DAY)
 		ORDER BY date DESC
-		LIMIT 30
+		LIMIT 50
 	`
 
 	rows, err := db.Query(sql)
