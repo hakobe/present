@@ -35,11 +35,16 @@ func Start(db *sql.DB) chan *slackOutgoing.Op {
 			tmpl, err := template.New("upcommings").Parse(`
 <html>
 <body>
-  <ul>
+  <table>
+	<tr>
+		<th>Tag</th><th>Title</th><th>Url</th>
+	</tr>
 	{{ range . }}
-	<li><a href="{{.Url}}">{{.Title}}</a></li>
+	<tr>
+		<td>{{.Tag}}</td><td>{{.Title}}</td><td>{{.Url}}</td>
+	</tr>
 	{{ end }}
-  </ul>
+  </table>
 </body>
 </html>
 		`)
