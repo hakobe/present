@@ -51,7 +51,7 @@ func postTags(db *sql.DB) {
 		return
 	}
 	log.Printf("Posting tags: %s\n", strings.Join(tags, ", "))
-	err = slackIncoming.Post(strings.Join(tags, ", "), "")
+	err = slackIncoming.Post("Watching tags: " + strings.Join(tags, ", "), "")
 	if err != nil {
 		log.Printf("%v\n", err)
 		return
