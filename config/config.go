@@ -9,7 +9,7 @@ var DbDsn string = os.Getenv("PRESENT_DB_DSN")
 
 var SlackIncomingWebhookUrl string = os.Getenv("PRESENT_SLACK_INCOMMING_URL")
 
-var Name string
+var Name string = "present"
 var Wait int = 15 * 60
 var NoopLimit int = 0
 
