@@ -141,6 +141,44 @@ func Next(db *sql.DB) (*DbEntry, error) {
 	return entry, nil
 }
 
+func Upcommings(db *sql.DB) ([]*DbEntry, error) {
+	sql := `
+		SELECT id, url, title, description, date FROM entries
+		WHERE
+		  NOT has_posted AND
+		  created > DATE_SUB(NOW(), INTERVAL 3 DAY)
+		ORDER BY date DESC
+		LIMIT 30
+	`
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	entries := make([]*DbEntry, 0)
+	for rows.Next() {
+		var id int
+		entry := &DbEntry{}
+		if err := rows.Scan(
+			&id,
+			&(entry.url),
+			&(entry.title),
+			&(entry.description),
+			&(entry.date),
+		); err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
+
 func deleteOld(db *sql.DB) error {
 	sql := `
 		DELETE FROM entries

@@ -118,7 +118,7 @@ func main() {
 
 	collectedEntries, updateTags := collector.Start()
 	updateToSavedTags(db, updateTags)
-	webOp := web.Start()
+	webOp := web.Start(db)
 
 	go func() {
 		for entry := range collectedEntries {
