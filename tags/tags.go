@@ -2,10 +2,6 @@ package tags
 
 import "database/sql"
 
-type DbTag struct {
-	tag string
-}
-
 func Prepare(db *sql.DB) error {
 	sql := `
 		CREATE TABLE IF NOT EXISTS tags (

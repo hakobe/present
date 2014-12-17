@@ -11,6 +11,7 @@ type Entry interface {
 	Url() string
 	Description() string
 	Date() time.Time
+	Tag() string
 }
 
 type DbEntry struct {
@@ -18,6 +19,7 @@ type DbEntry struct {
 	url string
 	description string
 	date time.Time
+	tag string
 }
 
 func (entry *DbEntry) Title() string {
@@ -36,6 +38,10 @@ func (entry *DbEntry) Date() time.Time {
 	return entry.date
 }
 
+func (entry *DbEntry) Tag() string {
+	return entry.tag
+}
+
 func Prepare(db *sql.DB) error {
 	sql := `
 		CREATE TABLE IF NOT EXISTS entries (
@@ -45,6 +51,7 @@ func Prepare(db *sql.DB) error {
 			description TEXT NOT NULL,
 			date        TIMESTAMP NOT NULL,
 			has_posted  BOOL NOT NULL,
+			tag VARCHAR(255) NOT NULL,
 			created     TIMESTAMP NOT NULL,
 			PRIMARY KEY(id),
 			KEY(has_posted, created, date)
@@ -86,11 +93,11 @@ func Add(db *sql.DB, entry Entry) error {
 
 	insertSql := `
 		INSERT INTO entries
-		(url, title, description, date, has_posted, created)
+		(url, title, description, date, has_posted, tag, created)
 		VALUES
-		( ?, ?, ?, ?, ?, ? )
+		( ?, ?, ?, ?, ?, ?, ? )
 	`
-	_, err = tx.Exec(insertSql, entry.Url(), entry.Title(), entry.Description(), entry.Date(), false, time.Now())
+	_, err = tx.Exec(insertSql, entry.Url(), entry.Title(), entry.Description(), entry.Date(), false, entry.Tag(), time.Now())
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -105,7 +112,7 @@ func Next(db *sql.DB) (*DbEntry, error) {
 		return nil, err
 	}
 	fetchSql := `
-		SELECT id, url, title, description, date FROM entries
+		SELECT id, url, title, description, date, tag FROM entries
 		WHERE
 		  NOT has_posted AND
 		  created > DATE_SUB(NOW(), INTERVAL 3 DAY)
@@ -121,6 +128,7 @@ func Next(db *sql.DB) (*DbEntry, error) {
 		&(entry.title),
 		&(entry.description),
 		&(entry.date),
+		&(entry.tag),
 	)
 	if err != nil {
 		tx.Rollback()
@@ -143,7 +151,7 @@ func Next(db *sql.DB) (*DbEntry, error) {
 
 func Upcommings(db *sql.DB) ([]*DbEntry, error) {
 	sql := `
-		SELECT id, url, title, description, date FROM entries
+		SELECT id, url, title, description, date, tag FROM entries
 		WHERE
 		  NOT has_posted AND
 		  created > DATE_SUB(NOW(), INTERVAL 3 DAY)
@@ -167,6 +175,7 @@ func Upcommings(db *sql.DB) ([]*DbEntry, error) {
 			&(entry.title),
 			&(entry.description),
 			&(entry.date),
+			&(entry.tag),
 		); err != nil {
 			return nil, err
 		}

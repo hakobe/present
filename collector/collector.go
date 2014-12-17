@@ -9,18 +9,13 @@ import (
 	"time"
 )
 
-func urls(tags []string) []string {
-	urls := []string{}
-
-	for _, tag := range tags {
-		queries := url.Values{}
-		queries.Add("safe", "on")
-		queries.Add("mode", "rss")
-		queries.Add("users", "5")
-		queries.Add("q", tag)
-		urls = append(urls, "http://b.hatena.ne.jp/search/tag?"+queries.Encode())
-	}
-	return urls
+func feedUrl(tag string) string {
+	queries := url.Values{}
+	queries.Add("safe", "on")
+	queries.Add("mode", "rss")
+	queries.Add("users", "5")
+	queries.Add("q", tag)
+	return "http://b.hatena.ne.jp/search/tag?"+queries.Encode()
 }
 
 func fetch(url string) ([]byte, error) {
@@ -51,6 +46,7 @@ type RssEntry struct {
 	RawUrl         string   `xml:"link"`
 	RawDescription string   `xml:"description"`
 	RawDate        string   `xml:"http://purl.org/dc/elements/1.1/ date"`
+	tag            string
 }
 
 func (entry *RssEntry) Title() string {
@@ -71,6 +67,10 @@ func (entry *RssEntry) Date() time.Time {
 		log.Fatal(err)
 	}
 	return t
+}
+
+func (entry *RssEntry) Tag() string {
+	return entry.tag
 }
 
 func parseRss(data []byte) (*RssFeed, error) {
@@ -102,9 +102,9 @@ func Start() (<-chan *RssEntry, chan<- []string) {
 	newTags := make(chan []string)
 
 	collect := func(tags []string, out chan *RssEntry) {
-		for _, url := range urls(tags) {
-			go func(url string) {
-				feed, err := fetchRss(url)
+		for _, tag := range tags {
+			go func(tag string) {
+				feed, err := fetchRss(feedUrl(tag))
 
 				if err != nil {
 					log.Print(err)
@@ -112,9 +112,10 @@ func Start() (<-chan *RssEntry, chan<- []string) {
 				}
 				for _, entry := range feed.RssEntries {
 					log.Printf("Queued entry: %s\n", entry.Title())
+					entry.tag = tag
 					out <- entry
 				}
-			}(url)
+			}(tag)
 		}
 	}
 
