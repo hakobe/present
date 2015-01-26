@@ -14,6 +14,17 @@ type Op struct {
 	Args []string
 }
 
+func isNameMatched(name string) bool {
+	matched := false
+	for _, n := range config.Names {
+		if name == n {
+			matched = true
+			break
+		}
+	}
+	return matched
+}
+
 func Handle(op chan *Op, rw http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		userId := r.FormValue("user_id")
@@ -21,7 +32,7 @@ func Handle(op chan *Op, rw http.ResponseWriter, r *http.Request) {
 		texts := regexp.MustCompile("\\s+").Split(text, -1)
 
 		if userId != "USLACKBOT" {
-			if len(texts) > 1 && texts[0] == config.Name {
+			if len(texts) > 1 && isNameMatched(texts[0]) {
 				switch texts[1] {
 				case "plz":
 					op <- &Op{"plz", nil}
