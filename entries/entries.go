@@ -15,11 +15,11 @@ type Entry interface {
 }
 
 type DbEntry struct {
-	title string
-	url string
+	title       string
+	url         string
 	description string
-	date time.Time
-	tag string
+	date        time.Time
+	tag         string
 }
 
 func (entry *DbEntry) Title() string {
@@ -149,6 +149,27 @@ func Next(db *sql.DB) (*DbEntry, error) {
 	return entry, nil
 }
 
+func Find(db *sql.DB, id int) (*DbEntry, error) {
+	fetchSql := `
+		SELECT url, title, description, date, tag FROM entries
+		WHERE
+		  id = ?
+		LIMIT 1
+	`
+	entry := &DbEntry{}
+	err := db.QueryRow(fetchSql, id).Scan(
+		&(entry.url),
+		&(entry.title),
+		&(entry.description),
+		&(entry.date),
+		&(entry.tag),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return entry, nil
+}
+
 func Upcommings(db *sql.DB) ([]*DbEntry, error) {
 	sql := `
 		SELECT id, url, title, description, date, tag FROM entries
@@ -202,7 +223,7 @@ func deleteOld(db *sql.DB) error {
 
 func StartCleaner(db *sql.DB) {
 	go func() {
-		ticker := time.Tick( 1 * time.Hour)
+		ticker := time.Tick(1 * time.Hour)
 		for _ = range ticker {
 			err := deleteOld(db)
 			if err != nil {

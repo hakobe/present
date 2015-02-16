@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
 
 	"github.com/hakobe/present/entries"
 	slackOutgoing "github.com/hakobe/present/slack/outgoing"
@@ -30,7 +32,6 @@ func Start(db *sql.DB) chan *slackOutgoing.Op {
 			if err != nil {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
-				return
 			}
 			tmpl, err := template.New("upcommings").Parse(`
 <html>
@@ -54,6 +55,27 @@ func Start(db *sql.DB) chan *slackOutgoing.Op {
 			}
 
 			tmpl.Execute(rw, es)
+		},
+	)
+
+	http.HandleFunc(
+		"/entry/",
+		func(rw http.ResponseWriter, r *http.Request) {
+			matches := regexp.MustCompile(`/entry/(\d+)`).FindStringSubmatch(r.URL.Path)
+			if !(matches != nil && matches[1] != "") {
+				http.Error(rw, "Invalid URL", http.StatusBadRequest)
+				return
+			}
+
+			var id int
+			var err error
+			if id, err = strconv.Atoi(matches[1]); err != nil {
+				http.Error(rw, err.Error(), http.StatusNotFound)
+				return
+			}
+
+			entry, err := entries.Find(db, id)
+			http.Redirect(rw, r, entry.Url(), http.StatusFound)
 		},
 	)
 
