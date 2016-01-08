@@ -75,6 +75,10 @@ func Start(db *sql.DB) chan *slackOutgoing.Op {
 			}
 
 			entry, err := entries.Find(db, id)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			http.Redirect(rw, r, entry.Url(), http.StatusFound)
 		},
 	)
