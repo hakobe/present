@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/hakobe/present/accesslogs"
 	"github.com/hakobe/present/collector"
 	"github.com/hakobe/present/config"
 	"github.com/hakobe/present/entries"
@@ -51,7 +52,7 @@ func postTags(db *sql.DB) {
 		return
 	}
 	log.Printf("Posting tags: %s\n", strings.Join(tags, ", "))
-	err = slackIncoming.Post("Watching tags: " + strings.Join(tags, ", "), "")
+	err = slackIncoming.Post("Watching tags: "+strings.Join(tags, ", "), "")
 	if err != nil {
 		log.Printf("%v\n", err)
 		return
@@ -109,11 +110,15 @@ func main() {
 
 	err = entries.Prepare(db)
 	if err != nil {
-		log.Fatalf("Db(entries) preparation error: %v\n", err)
+		log.Fatalf("DB(entries) preparation error: %v\n", err)
 	}
 	err = tags.Prepare(db)
 	if err != nil {
-		log.Fatalf("Db(tags) preparation error: %v\n", err)
+		log.Fatalf("DB(tags) preparation error: %v\n", err)
+	}
+	err = accesslogs.Prepare(db)
+	if err != nil {
+		log.Fatalf("DB(accesslogs) preparation error: %v\n", err)
 	}
 
 	collectedEntries, updateTags := collector.Start()

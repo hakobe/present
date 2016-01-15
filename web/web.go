@@ -5,10 +5,12 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strconv"
 
+	"github.com/hakobe/present/accesslogs"
 	"github.com/hakobe/present/entries"
 	slackOutgoing "github.com/hakobe/present/slack/outgoing"
 )
@@ -79,7 +81,21 @@ func Start(db *sql.DB) chan *slackOutgoing.Op {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			http.Redirect(rw, r, entry.Url(), http.StatusFound)
+			accesslogs.Access(db, id)
+			tmpl, err := template.New("entry").Parse(`
+<html>
+<body></body>
+<head>
+  <meta http-equiv="refresh" content="0;URL=data:text/html,%3Cmeta%20http-equiv%3D%22refresh%22%20content%3D%220%3BURL%3D{{.}}%22%3E"></meta>
+</head>
+</html>
+		`)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			tmpl.Execute(rw, template.HTML(url.QueryEscape(entry.Url())))
 		},
 	)
 
