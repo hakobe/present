@@ -15,7 +15,7 @@ func feedUrl(tag string) string {
 	queries.Add("mode", "rss")
 	queries.Add("users", "5")
 	queries.Add("q", tag)
-	return "http://b.hatena.ne.jp/search/tag?"+queries.Encode()
+	return "http://b.hatena.ne.jp/search/tag?" + queries.Encode()
 }
 
 func fetch(url string) ([]byte, error) {
@@ -47,6 +47,10 @@ type RssEntry struct {
 	RawDescription string   `xml:"description"`
 	RawDate        string   `xml:"http://purl.org/dc/elements/1.1/ date"`
 	tag            string
+}
+
+func (entry *RssEntry) ID() int {
+	return -1
 }
 
 func (entry *RssEntry) Title() string {
@@ -125,7 +129,7 @@ func Start() (<-chan *RssEntry, chan<- []string) {
 			select {
 			case <-ticker:
 				collect(tags, out)
-			case ts := <- newTags:
+			case ts := <-newTags:
 				tags = ts
 				log.Printf("New tags: %s\n", tags)
 				collect(tags, out)

@@ -13,6 +13,8 @@ var SlackIncomingWebhookUrl string = os.Getenv("PRESENT_SLACK_INCOMMING_URL")
 var Names []string = []string{"present"}
 var Wait int = 15 * 60
 var NoopLimit int = 0
+var RankingsHour int = -1
+var AccesslogUrlBase string = ""
 
 func init() {
 
@@ -30,4 +32,11 @@ func init() {
 	if n, err := strconv.Atoi(noopLimit); err == nil {
 		NoopLimit = n
 	}
+
+	rankingsHour := os.Getenv("PRESENT_RANKINGS_HOUR")
+	if r, err := strconv.Atoi(rankingsHour); err == nil {
+		RankingsHour = r
+	}
+
+	AccesslogUrlBase = os.Getenv("PRESENT_ACCESSLOG_URL_BASE")
 }

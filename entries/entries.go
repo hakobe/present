@@ -7,6 +7,7 @@ import (
 )
 
 type Entry interface {
+	ID() int
 	Title() string
 	Url() string
 	Description() string
@@ -15,11 +16,16 @@ type Entry interface {
 }
 
 type DbEntry struct {
+	id          int
 	title       string
 	url         string
 	description string
 	date        time.Time
 	tag         string
+}
+
+func (entry *DbEntry) ID() int {
+	return entry.id
 }
 
 func (entry *DbEntry) Title() string {
@@ -40,6 +46,19 @@ func (entry *DbEntry) Date() time.Time {
 
 func (entry *DbEntry) Tag() string {
 	return entry.tag
+}
+
+type RankedEntry struct {
+	entry       Entry
+	accessCount int
+}
+
+func (rankedEntry *RankedEntry) Entry() Entry {
+	return rankedEntry.entry
+}
+
+func (rankedEntry *RankedEntry) AccessCount() int {
+	return rankedEntry.accessCount
 }
 
 func Prepare(db *sql.DB) error {
@@ -120,10 +139,9 @@ func Next(db *sql.DB) (*DbEntry, error) {
 		LIMIT 1
 		FOR UPDATE
 	`
-	var id int
 	entry := &DbEntry{}
 	err = tx.QueryRow(fetchSql).Scan(
-		&id,
+		&(entry.id),
 		&(entry.url),
 		&(entry.title),
 		&(entry.description),
@@ -140,7 +158,7 @@ func Next(db *sql.DB) (*DbEntry, error) {
 		  id = ? AND has_posted = false
 		LIMIT 1
 	`
-	_, err = tx.Exec(updateSql, id)
+	_, err = tx.Exec(updateSql, entry.id)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -151,13 +169,14 @@ func Next(db *sql.DB) (*DbEntry, error) {
 
 func Find(db *sql.DB, id int) (*DbEntry, error) {
 	fetchSql := `
-		SELECT url, title, description, date, tag FROM entries
+		SELECT id, url, title, description, date, tag FROM entries
 		WHERE
 		  id = ?
 		LIMIT 1
 	`
 	entry := &DbEntry{}
 	err := db.QueryRow(fetchSql, id).Scan(
+		&(entry.id),
 		&(entry.url),
 		&(entry.title),
 		&(entry.description),
@@ -188,10 +207,9 @@ func Upcommings(db *sql.DB) ([]*DbEntry, error) {
 
 	entries := make([]*DbEntry, 0)
 	for rows.Next() {
-		var id int
 		entry := &DbEntry{}
 		if err := rows.Scan(
-			&id,
+			&(entry.id),
 			&(entry.url),
 			&(entry.title),
 			&(entry.description),
@@ -207,6 +225,54 @@ func Upcommings(db *sql.DB) ([]*DbEntry, error) {
 	}
 
 	return entries, nil
+}
+
+func Rankings(db *sql.DB) ([]*RankedEntry, error) {
+	sql := `
+        SELECT
+            count(accesslogs.entry_id) as access_count,
+            entries.id as id,
+            entries.url as url,
+            entries.title as title,
+            entries.description as description,
+            entries.date as date,
+            entries.tag as tag
+          FROM accesslogs JOIN entries ON accesslogs.entry_id = entries.id
+          WHERE accesslogs.created > DATE_SUB(NOW(), INTERVAL 1 DAY)
+          GROUP BY accesslogs.entry_id
+          ORDER BY access_count DESC
+          LIMIT 10
+	`
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	rankedEntries := make([]*RankedEntry, 0)
+	for rows.Next() {
+		var accessCount int
+		entry := &DbEntry{}
+		if err := rows.Scan(
+			&accessCount,
+			&(entry.id),
+			&(entry.url),
+			&(entry.title),
+			&(entry.description),
+			&(entry.date),
+			&(entry.tag),
+		); err != nil {
+			return nil, err
+		}
+
+		rankedEntries = append(rankedEntries, &RankedEntry{entry, accessCount})
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return rankedEntries, nil
 }
 
 func deleteOld(db *sql.DB) error {

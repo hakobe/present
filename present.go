@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -34,8 +37,12 @@ func postNextEntry(db *sql.DB) {
 		return
 	}
 	log.Printf("Posting entry: %s\n", entry.Title())
+	entryUrl := entry.Url()
+	if config.AccesslogUrlBase != "" {
+		entryUrl = config.AccesslogUrlBase + "/entry/" + strconv.Itoa(entry.ID())
+	}
 	err = slackIncoming.Post(
-		fmt.Sprintf("<%s|%s>", entry.Url(), entry.Title()),
+		fmt.Sprintf("<%s|%s>", entryUrl, entry.Title()),
 		trim(entry.Description(), 150),
 	)
 	if err != nil {
@@ -80,12 +87,41 @@ func delTag(db *sql.DB, tag string) {
 	postTags(db)
 }
 
+func postRankings(db *sql.DB) {
+	rankedEntries, err := entries.Rankings(db)
+	if err != nil {
+		log.Printf("Rankings retrieve error: %v\n", err)
+		return
+	}
+
+	tmpl, err := template.New("rankings").Parse(`
+Click rankings in 24 hours
+{{ range $i, $e := . }}{{$e.AccessCount}} clicks <{{$e.Entry.Url}}|{{$e.Entry.Title}}> 
+{{ end }}`)
+	if err != nil {
+		log.Printf("Rankings template error: %v\n", err)
+		return
+	}
+
+	buf := bytes.NewBufferString("")
+	tmpl.Execute(buf, rankedEntries)
+
+	err = slackIncoming.Post("", buf.String())
+	if err != nil {
+		log.Printf("%v\n", err)
+		return
+	}
+
+	log.Printf("Rankings posted.\n")
+}
+
 func postHelp() {
 	text := `
 plz: Post a one url.
 tags: Show all watching tags.
 add <tag>: Add a watching tag.
 del <tag>: Delete a watching tag.
+rankings: Show clicks ranking in 24 hours.
 help: Show this message.
 	`
 	err := slackIncoming.Post("", text)
@@ -136,6 +172,16 @@ func main() {
 	}()
 	entries.StartCleaner(db)
 
+	go func() {
+		c := time.Tick(1 * time.Minute)
+		for now := range c {
+			if now.Hour() == config.RankingsHour && now.Minute() == 0 {
+				postRankings(db)
+				log.Printf("Scheduled rankings are posted.\n")
+			}
+		}
+	}()
+
 	noopCount := 0
 	wait := config.Wait
 	for {
@@ -155,13 +201,13 @@ func main() {
 			switch o.Op {
 			case "humanspeaking":
 				log.Printf("Humans are speaking. Go to next sleep.\n")
-			case "plz":
+			case "plz", "please":
 				postNextEntry(db)
 			case "fever":
 				for i := 0; i < 10; i++ {
 					postNextEntry(db)
 				}
-			case "tags":
+			case "tags", "tag":
 				postTags(db)
 			case "add":
 				addTag(db, o.Args[0])
@@ -171,6 +217,8 @@ func main() {
 				updateToSavedTags(db, updateTags)
 			case "help":
 				postHelp()
+			case "ranking", "rankings":
+				postRankings(db)
 			}
 
 			noopCount = 0
