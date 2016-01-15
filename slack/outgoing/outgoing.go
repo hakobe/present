@@ -34,17 +34,19 @@ func Handle(op chan *Op, rw http.ResponseWriter, r *http.Request) {
 		if userId != "USLACKBOT" {
 			if len(texts) > 1 && isNameMatched(texts[0]) {
 				switch texts[1] {
-				case "plz":
+				case "plz", "please":
 					op <- &Op{"plz", nil}
 				case "fever":
 					op <- &Op{"fever", nil}
-				case "tags":
+				case "tags", "tag":
 					op <- &Op{"tags", nil}
 				case "add":
 					op <- &Op{"add", []string{strings.Join(texts[2:], " ")}}
 				case "del":
 					op <- &Op{"del", []string{strings.Join(texts[2:], " ")}}
-				case "help":
+				case "rankings", "ranking":
+					op <- &Op{"rankings", nil}
+				default:
 					op <- &Op{"help", nil}
 				}
 			} else {

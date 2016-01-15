@@ -201,13 +201,13 @@ func main() {
 			switch o.Op {
 			case "humanspeaking":
 				log.Printf("Humans are speaking. Go to next sleep.\n")
-			case "plz", "please":
+			case "plz":
 				postNextEntry(db)
 			case "fever":
 				for i := 0; i < 10; i++ {
 					postNextEntry(db)
 				}
-			case "tags", "tag":
+			case "tags":
 				postTags(db)
 			case "add":
 				addTag(db, o.Args[0])
@@ -217,7 +217,7 @@ func main() {
 				updateToSavedTags(db, updateTags)
 			case "help":
 				postHelp()
-			case "ranking", "rankings":
+			case "rankings":
 				postRankings(db)
 			}
 
