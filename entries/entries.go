@@ -241,7 +241,7 @@ func Rankings(db *sql.DB) ([]*RankedEntry, error) {
           WHERE accesslogs.created > DATE_SUB(NOW(), INTERVAL 1 DAY)
           GROUP BY accesslogs.entry_id
           ORDER BY access_count DESC
-          LIMIT 10
+          LIMIT 5
 	`
 
 	rows, err := db.Query(sql)
