@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"strconv"
@@ -83,11 +82,16 @@ func Start(db *sql.DB) chan *slackOutgoing.Op {
 			}
 			accesslogs.Access(db, id)
 			tmpl, err := template.New("entry").Parse(`
+<!DOCTYPE html>
 <html>
-<body></body>
 <head>
-  <meta http-equiv="refresh" content="0;URL=data:text/html,%3Cmeta%20http-equiv%3D%22refresh%22%20content%3D%220%3BURL%3D{{.}}%22%3E"></meta>
+<title>Redirector</title>
+<meta name="referrer" content="never">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Refresh" content="0; URL={{.}}">
 </head>
+<body>
+</body>
 </html>
 		`)
 			if err != nil {
@@ -95,7 +99,7 @@ func Start(db *sql.DB) chan *slackOutgoing.Op {
 				return
 			}
 
-			tmpl.Execute(rw, template.HTML(url.QueryEscape(entry.Url())))
+			tmpl.Execute(rw, template.HTML(entry.Url()))
 		},
 	)
 
